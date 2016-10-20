@@ -1,6 +1,72 @@
 import sqlite3
 import time
 
+# Returns true if amount check passes, false if it fails
+def amountCheck ( hcno, amount, drug_name):
+	sql = '''SELECT age_group FROM patients WHERE hcno=?'''
+	params = (hcno, )
+	age_group = str(cursor.execute(sql, params).fetchone()[0])
+
+	sql = '''SELECT sug_amount FROM dosage WHERE age_group=? AND drug_name=?'''
+	params = (age_group, drug_name)
+	sug_amount = int(cursor.execute(sql, params).fetchone()[0])
+	if amount > sug_amount:
+		while True:
+			print("You have entered an amount greater than the suggested amount of " + str(sug_amount) + ".")
+			print("Would you like to continue? (Y/n)")
+			choice = raw_input(">> ")
+			if choice.lower()=='y':
+				return True
+			elif choice.lower()=='n':
+				return False
+			print("Please make a valid choice.")
+	return True
+
+def allergyCheck( hcno, drug_name):
+	sql = '''SELECT drug_name FROM reportedallergies WHERE hcno=?'''
+	params = (hcno, )
+	allergicList = cursor.execute(sql, params).fetchall()
+	drugList = list()
+	for al in allergicList:
+		drugList.append(str(al[0]))
+	# Check if patient is allergic to drug
+	if drug_name in drugList:
+		while True:
+			print("You have entered a drug this patient is allergic to: " + drug_name)
+			print("Would you like to proceed? (Y/n)")
+			sel = raw_input(">> ")
+			if sel.lower()=='y':
+				return True
+			elif sel.lower()=='n':
+				return False
+			print("Please enter a valid response.")
+	# Check if patient may be allergic to drug
+	else:
+		causedInferred = list()
+		for drug in drugList:
+			sql = '''SELECT * FROM inferredallergies WHERE alg=?'''
+			params = (drug, )
+			if len(cursor.execute(sql, params).fetchall())>0:
+				causedInferred.append(drug)
+
+		if len(causedInferred)==0:
+			return True
+		else:
+			while True:
+				print("\nDue to the patients reported allergies of: ")
+				for d in causedInferred: print(d)
+				print("They may be allergic to " + drug_name + ".")
+				print("Would you like to proceed? (Y/n)")
+				sel = raw_input(">> ").lower()
+				if sel=='y':
+					return True
+				elif sel=='n':
+					return False
+				print("Please make a valid selection.")
+
+
+
+
 
 def addSymptom ( hcno, chart_id, symptom):
 	sql = '''INSERT INTO symptoms VALUES (?, ?, ?, ?, ?)'''
@@ -15,10 +81,12 @@ def addDiagnosis ( hcno, chart_id, diagnosis):
 	conn.commit()
 
 def addMedication ( hcno, chart_id, start, end, amount, drug_name):
-	sql = '''INSERT INTO medications VALUES (?, ?, ?, ?, ?, ?, ?, ?)'''
-	params = (hcno, chart_id, staff_id, time.strftime("%Y-%m-%d %H:%M:%S"), start, end, amount, drug_name)
-	cursor.execute(sql, params)
-	conn.commit()
+	# If both tests pass we can add the medication
+	if amountCheck(hcno, amount, drug_name) and allergyCheck(hcno, drug_name):
+		sql = '''INSERT INTO medications VALUES (?, ?, ?, ?, ?, ?, ?, ?)'''
+		params = (hcno, chart_id, staff_id, time.strftime("%Y-%m-%d %H:%M:%S"), start, end, amount, drug_name)
+		cursor.execute(sql, params)
+		conn.commit()
 
 
 # Connect to the database
@@ -101,6 +169,8 @@ ORDER BY adate DESC'''
 						print("")
 				if waiting2: print("Please select a proper chart number.")
 
+			chartStr = " CHART ID | HCNO     | Admission Date" + '\n ' + selChart[0].ljust(8) + ' | ' + str(hcno).ljust(8) + ' | ' + selChart[1] 
+			print(chartStr)
 
 			# Display the medical information for the selected chart
 			sql = '''SELECT *
@@ -134,6 +204,7 @@ ORDER BY ? DESC'''
 			on Oct 19 2016'''
 			lineList = symList + diaList + medList
 			lineList = sorted(lineList, key = lambda x: x[4])
+			lineString = str()
 			for line in lineList:
 				# Create and print line string
 				string = line[0]
@@ -151,7 +222,8 @@ ORDER BY ? DESC'''
 					else:
 						element = element.ljust(4)
 					string += '| ' + element
-				print(string)
+				lineString += string + '\n'
+			print(lineString)
 
 			# Get user options
 			options = list()
@@ -195,15 +267,17 @@ ORDER BY ? DESC'''
 						print("Please enter the medication end date: ")
 						end = raw_input(">> ")
 						print("Please enter the daily amount: ")
-						amount = raw_input(">> ")
+						amount = int(raw_input(">> "))
 						print("Please enter the drug name: ")
 						drug = raw_input(">> ")
 						addMedication(hcno, chart_id, start, end, amount, drug) 
 					elif sel=='4':
 						waiting1 = True
 						waiting3 = False
+						break
 					elif sel=='5':
 						waiting3 = False
+						break
 					else:
 						print("Please select a proper option.")
 
