@@ -33,7 +33,7 @@ while waiting2:
 	# If there were no results we can add this user
 	if len(cursor.fetchall()) == 0:
 		# Create password hash
-		passHash = hashlib.md5(password).hexdigest()
+		passHash = hashlib.sha224(password).hexdigest()
 
 		# Create the query to store this users data
 		sql = '''INSERT INTO staff(role, name, login, password)
