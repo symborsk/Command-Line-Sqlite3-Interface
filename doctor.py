@@ -1,6 +1,10 @@
 import sqlite3
 import time
 
+'''
+TODO: change all edate to ddate
+'''
+
 # Returns true if amount check passes, false if it fails
 def amountCheck ( hcno, amount, drug_name):
 	sql = '''SELECT age_group FROM patients WHERE hcno=?'''
@@ -68,19 +72,32 @@ def allergyCheck( hcno, drug_name):
 
 
 
-def addSymptom ( hcno, chart_id, symptom):
+def addSymptom ( hcno, chart_id):
+	print("\nPlease input the symptom:")
+	symptom = raw_input(">> ")
 	sql = '''INSERT INTO symptoms VALUES (?, ?, ?, ?, ?)'''
 	params = (hcno, chart_id, staff_id, time.strftime("%Y-%m-%d %H:%M:%S"), symptom)
 	cursor.execute(sql, params)
 	conn.commit()
 
-def addDiagnosis ( hcno, chart_id, diagnosis):
+def addDiagnosis ( hcno, chart_id):
+	print("\nPlease input the diagnosis")
+	diagnosis = raw_input(">> ")
 	sql = '''INSERT INTO diagnoses VALUES (?, ?, ?, ?, ?)'''
 	params = (hcno, chart_id, staff_id, time.strftime("%Y-%m-%d %H:%M:%S"), diagnosis)
 	cursor.execute(sql, params)
 	conn.commit()
 
-def addMedication ( hcno, chart_id, start, end, amount, drug_name):
+def addMedication ( hcno, chart_id):
+	print("\nPlease enter the medication start date: ")
+	start = raw_input(">> ")
+	print("Please enter the medication end date: ")
+	end = raw_input(">> ")
+	print("Please enter the daily amount: ")
+	amount = int(raw_input(">> "))
+	print("Please enter the drug name: ")
+	drug_name = raw_input(">> ")
+	
 	# If both tests pass we can add the medication
 	if amountCheck(hcno, amount, drug_name) and allergyCheck(hcno, drug_name):
 		sql = '''INSERT INTO medications VALUES (?, ?, ?, ?, ?, ?, ?, ?)'''
@@ -169,7 +186,8 @@ ORDER BY adate DESC'''
 						print("")
 				if waiting2: print("Please select a proper chart number.")
 
-			chartStr = " CHART ID | HCNO     | Admission Date" + '\n ' + selChart[0].ljust(8) + ' | ' + str(hcno).ljust(8) + ' | ' + selChart[1] 
+			barrier = '\n--------------------------------------'
+			chartStr = " CHART ID | HCNO     | Admission Date" + barrier +  '\n ' + selChart[0].ljust(8) + ' | ' + str(hcno).ljust(8) + ' | ' + selChart[1] 
 			print(chartStr)
 
 			# Display the medical information for the selected chart
@@ -259,23 +277,13 @@ ORDER BY ? DESC'''
 				else:
 					# Symptom pressed
 					if sel=='1':
-						print("\nPlease input the symptom:")
-						addSymptom(hcno, chart_id, raw_input(">> "))
+						addSymptom(hcno, chart_id)
 					# Diagnosis pressed
 					elif sel=='2':
-						print("\nPlease input the diagnosis")
-						addDiagnosis(hcno, chart_id, raw_input(">> "))
+						addDiagnosis(hcno, chart_id)
 					# Medication pressed
 					elif sel=='3':
-						print("\nPlease enter the medication start date: ")
-						start = raw_input(">> ")
-						print("Please enter the medication end date: ")
-						end = raw_input(">> ")
-						print("Please enter the daily amount: ")
-						amount = int(raw_input(">> "))
-						print("Please enter the drug name: ")
-						drug = raw_input(">> ")
-						addMedication(hcno, chart_id, start, end, amount, drug) 
+						addMedication(hcno, chart_id) 
 					# Search pressed
 					elif sel=='4':
 						waiting1 = True
@@ -287,6 +295,40 @@ ORDER BY ? DESC'''
 						break
 					else:
 						print("Please select a proper option.")
+		elif choice=='2':
+			waiting1 = False
+			waiting4 = True
+			while waiting4:
+				# Get a proper chart from the user
+				while True:
+					print("Please enter an open chart id:")
+					sel = raw_input(">> ")
+					sql = '''SELECT * FROM charts WHERE chart_id=? AND edate IS NULL'''
+					params = (sel, )
+					selChart = cursor.execute(sql, params).fetchall()[0]
+					if selChart != None:
+						break
+					print("You entered an invalid chart id.")
+
+				# Request which kind of line user would like to add
+				while True:
+					print("What kind of line would you like to enter?")
+					print("S = Symptom \nD = Diagnosis \nM = Medication")
+					sel = raw_input(">> ").lower()
+					if sel=='s':
+						addSymptom(selChart[1], selChart[0])
+						break
+					elif sel=='d':
+						addDiagnosis(selChart[1], selChart[0])
+						break
+					elif sel=='m':
+						addMedication(selChart[1], selChart[0])
+						break
+					elif sel=='<':
+						break
+					print("Please make a valid selection.")
+
+
 
 
 conn.close()
