@@ -1,11 +1,41 @@
 import sqlite3
+import time
 
 
+def addSymptom ( hcno, chart_id, symptom):
+	sql = '''INSERT INTO symptoms VALUES (?, ?, ?, ?, ?)'''
+	params = (hcno, chart_id, staff_id, time.strftime("%Y-%m-%d %H:%M:%S"), symptom)
+	cursor.execute(sql, params)
+	conn.commit()
+
+def addDiagnosis ( hcno, chart_id, diagnosis):
+	sql = '''INSERT INTO diagnoses VALUES (?, ?, ?, ?, ?)'''
+	params = (hcno, chart_id, staff_id, time.strftime("%Y-%m-%d %H:%M:%S"), diagnosis)
+	cursor.execute(sql, params)
+	conn.commit()
+
+def addMedication ( hcno, chart_id, start, end, amount, drug_name):
+	sql = '''INSERT INTO medications VALUES (?, ?, ?, ?, ?, ?, ?, ?)'''
+	params = (hcno, chart_id, staff_id, time.strftime("%Y-%m-%d %H:%M:%S"), start, end, amount, drug_name)
+	cursor.execute(sql, params)
+	conn.commit()
+
+
+# Connect to the database
+global conn
+global cursor
+conn = sqlite3.connect('hospital.db')
+cursor = conn.cursor()
 waiting0 = True
+
+# Global vars from login
+global name
+global staff_id
 
 while waiting0:
 	# Present the user with their options
 	name = "Brett" # NAME PASSED FROM LOGIN HERE
+	staff_id = 1
 	print "\nWelcome,", name, '''\nPlease select one of the following: 
 \n1. Search patient records
 2. Edit chart
@@ -27,10 +57,6 @@ while waiting0:
 
 			if hcno=="<":
 				break
-
-			# Connect to the database
-			conn = sqlite3.connect('hospital.db')
-			cursor = conn.cursor()
 			
 			# Execute the query
 			sql = '''SELECT chart_id, adate, edate
@@ -63,15 +89,16 @@ ORDER BY adate DESC'''
 			global selChart
 			while waiting2:
 				print("\nSelect the chart number you want to view:")
-				num = raw_input(">> ")
-				if num=="<":
+				chart_id = raw_input(">> ")
+				if chart_id=="<":
 					waiting1 = True
 					break;
 				for chart in chartList:
-					if chart[0]==num:
+					if chart[0]==chart_id:
 						viewID = chart[0]
 						selChart = chart
 						waiting2 = False
+						print("")
 				if waiting2: print("Please select a proper chart number.")
 
 
@@ -82,21 +109,21 @@ WHERE hcno=?
 AND chart_id=?
 ORDER BY ? DESC'''
 			# Create symptom list
-			cursor.execute(sql.format('symptoms'), (hcno, num, 'obs_date'))
+			cursor.execute(sql.format('symptoms'), (hcno, chart_id, 'obs_date'))
 			sList = cursor.fetchall()
 			symList = tuple()
 			for sym in sList:
 				symList += ((' S ',) + sym, )
 
 			# Create diagnoses list
-			cursor.execute(sql.format('diagnoses'), (hcno, num, 'ddate'))
+			cursor.execute(sql.format('diagnoses'), (hcno, chart_id, 'ddate'))
 			dList = cursor.fetchall()
 			diaList = tuple()
 			for dia in dList:
 				diaList += ((' D ', ) + dia, )
 
 			# Create medications list
-			cursor.execute(sql.format('medications'), (hcno, num, 'mdate'))
+			cursor.execute(sql.format('medications'), (hcno, chart_id, 'mdate'))
 			mList = cursor.fetchall()
 			medList = tuple()
 			for med in mList:
@@ -109,24 +136,28 @@ ORDER BY ? DESC'''
 			lineList = sorted(lineList, key = lambda x: x[4])
 			for line in lineList:
 				# Create and print line string
-				string = '\n' + line[0]
+				string = line[0]
 				for element in line[1:]:
 					# Format the element to a uniform length
 					element = str(element)
-					if len(element)>8 and len(element)<12:
+					if len(element)>16:
+						element = element.ljust(20)
+					elif len(element)>12:
+						element = element.ljust(16)
+					elif len(element)>8:
 						element = element.ljust(12)
-					elif len(element)>6 and len(element)<10:
-						element = element.ljust(10)
+					elif len(element)>4:
+						element = element.ljust(8)
 					else:
-						element = element.ljust(6)
+						element = element.ljust(4)
 					string += '| ' + element
-				print(string+'\n')
+				print(string)
 
 			# Get user options
 			options = list()
 			if (selChart[2] == None):
 				options.append('1. Add a symptom')
-				options.append('2. Add a diagnoses')
+				options.append('2. Add a diagnosis')
 				options.append('3. Add a medication')
 				options.append('4. Search for another chart')
 				options.append('5. Return to home')
@@ -137,7 +168,7 @@ ORDER BY ? DESC'''
 			# Handle user input
 			waiting3 = True
 			while waiting3:
-				print("Please select an option")
+				print("\nPlease select an option")
 				for op in options:
 					print(op)
 				sel = raw_input(">> ")
@@ -153,11 +184,21 @@ ORDER BY ? DESC'''
 						print("Please select a proper option.")
 				else:
 					if sel=='1':
-						print("TODO// HANDLE ADD SYMPTOM")
+						print("\nPlease input the symptom:")
+						addSymptom(hcno, chart_id, raw_input(">> "))
 					elif sel=='2':
-						print ("TODO// HANDLE ADD DIAGNOSES")
+						print("\nPlease input the diagnosis")
+						addDiagnosis(hcno, chart_id, raw_input(">> "))
 					elif sel=='3':
-						print ("TODO// HANDLE ADD MEDICATION")
+						print("\nPlease enter the medication start date: ")
+						start = raw_input(">> ")
+						print("Please enter the medication end date: ")
+						end = raw_input(">> ")
+						print("Please enter the daily amount: ")
+						amount = raw_input(">> ")
+						print("Please enter the drug name: ")
+						drug = raw_input(">> ")
+						addMedication(hcno, chart_id, start, end, amount, drug) 
 					elif sel=='4':
 						waiting1 = True
 						waiting3 = False
