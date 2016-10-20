@@ -70,8 +70,6 @@ def allergyCheck( hcno, drug_name):
 
 
 
-
-
 def addSymptom ( hcno, chart_id):
 	print("\nPlease input the symptom:")
 	symptom = raw_input(">> ")
@@ -105,6 +103,59 @@ def addMedication ( hcno, chart_id):
 		cursor.execute(sql, params)
 		conn.commit()
 
+def getLineString( lineList):
+	lineString = str()
+	for line in lineList:
+		# Create and print line string
+		string = line[0]
+		for element in line[1:]:
+			# Format the element to a uniform length
+			element = str(element)
+			if len(element)>16:
+				element = element.ljust(20)
+			elif len(element)>12:
+				element = element.ljust(16)
+			elif len(element)>8:
+				element = element.ljust(12)
+			elif len(element)>4:
+				element = element.ljust(8)
+			else:
+				element = element.ljust(4)
+			string += '| ' + element
+		lineString += string + '\n'
+
+	return lineString
+
+def getLineList( hcno, chart_id):
+	# Display the medical information for the selected chart
+	sql = '''SELECT *
+FROM {}
+WHERE hcno=?
+AND chart_id=?
+ORDER BY ? DESC'''
+	# Create symptom list
+	cursor.execute(sql.format('symptoms'), (hcno, chart_id, 'obs_date'))
+	sList = cursor.fetchall()
+	symList = tuple()
+	for sym in sList:
+		symList += ((' S ',) + sym, )
+
+	# Create diagnoses list
+	cursor.execute(sql.format('diagnoses'), (hcno, chart_id, 'ddate'))
+	dList = cursor.fetchall()
+	diaList = tuple()
+	for dia in dList:
+		diaList += ((' D ', ) + dia, )
+
+	# Create medications list
+	cursor.execute(sql.format('medications'), (hcno, chart_id, 'mdate'))
+	mList = cursor.fetchall()
+	medList = tuple()
+	for med in mList:
+		medList += ((' M ', ) + med, )
+
+	lineList = symList + diaList + medList
+	return lineList
 
 # Connect to the database
 global conn
@@ -144,7 +195,7 @@ while waiting0:
 				break
 			
 			# Execute the query
-			sql = '''SELECT chart_id, adate, edate
+			sql = '''SELECT chart_id, adate, ddate
 FROM charts
 WHERE hcno=?
 ORDER BY adate DESC'''
@@ -187,60 +238,15 @@ ORDER BY adate DESC'''
 				if waiting2: print("Please select a proper chart number.")
 
 			barrier = '\n--------------------------------------'
-			chartStr = " CHART ID | HCNO     | Admission Date" + barrier +  '\n ' + selChart[0].ljust(8) + ' | ' + str(hcno).ljust(8) + ' | ' + selChart[1] 
+			chartStr = " CHART ID | HCNO     | Admission Date" + '\n ' + selChart[0].ljust(8) + ' | ' + str(hcno).ljust(8) + ' | ' + selChart[1] + barrier 
 			print(chartStr)
-
-			# Display the medical information for the selected chart
-			sql = '''SELECT *
-FROM {}
-WHERE hcno=?
-AND chart_id=?
-ORDER BY ? DESC'''
-			# Create symptom list
-			cursor.execute(sql.format('symptoms'), (hcno, chart_id, 'obs_date'))
-			sList = cursor.fetchall()
-			symList = tuple()
-			for sym in sList:
-				symList += ((' S ',) + sym, )
-
-			# Create diagnoses list
-			cursor.execute(sql.format('diagnoses'), (hcno, chart_id, 'ddate'))
-			dList = cursor.fetchall()
-			diaList = tuple()
-			for dia in dList:
-				diaList += ((' D ', ) + dia, )
-
-			# Create medications list
-			cursor.execute(sql.format('medications'), (hcno, chart_id, 'mdate'))
-			mList = cursor.fetchall()
-			medList = tuple()
-			for med in mList:
-				medList += ((' M ', ) + med, )
 
 			''' Sorting all entries by their entry date. Adapted from
 			http://stackoverflow.com/questions/20183069/how-to-sort-multidimensional-array-by-column
 			on Oct 19 2016'''
-			lineList = symList + diaList + medList
+			lineList = getLineList(hcno, selChart[0])
 			lineList = sorted(lineList, key = lambda x: x[4])
-			lineString = str()
-			for line in lineList:
-				# Create and print line string
-				string = line[0]
-				for element in line[1:]:
-					# Format the element to a uniform length
-					element = str(element)
-					if len(element)>16:
-						element = element.ljust(20)
-					elif len(element)>12:
-						element = element.ljust(16)
-					elif len(element)>8:
-						element = element.ljust(12)
-					elif len(element)>4:
-						element = element.ljust(8)
-					else:
-						element = element.ljust(4)
-					string += '| ' + element
-				lineString += string + '\n'
+			lineString = getLineString(lineList)
 			print(lineString)
 
 			# Get user options
@@ -298,33 +304,57 @@ ORDER BY ? DESC'''
 		elif choice=='2':
 			waiting1 = False
 			waiting4 = True
+			waiting5 = True
+			waiting6 = True
 			while waiting4:
 				# Get a proper chart from the user
-				while True:
-					print("Please enter an open chart id:")
+				while waiting5:
+					print("\nPlease enter an open chart id:")
 					sel = raw_input(">> ")
-					sql = '''SELECT * FROM charts WHERE chart_id=? AND edate IS NULL'''
+					sql = '''SELECT * FROM charts WHERE chart_id=? AND ddate IS NULL'''
 					params = (sel, )
-					selChart = cursor.execute(sql, params).fetchall()[0]
-					if selChart != None:
+					selChart = cursor.execute(sql, params).fetchall()
+					if len(selChart)>0:
+						selChart = selChart[0]
+						waiting5 = False
 						break
 					print("You entered an invalid chart id.")
 
 				# Request which kind of line user would like to add
-				while True:
-					print("What kind of line would you like to enter?")
+				while waiting6:
+					print("\nWhat kind of line would you like to enter?")
 					print("S = Symptom \nD = Diagnosis \nM = Medication")
 					sel = raw_input(">> ").lower()
 					if sel=='s':
 						addSymptom(selChart[1], selChart[0])
+						waiting6 = False
 						break
 					elif sel=='d':
 						addDiagnosis(selChart[1], selChart[0])
+						waiting6 = False
 						break
 					elif sel=='m':
 						addMedication(selChart[1], selChart[0])
+						waiting6 = False
 						break
 					elif sel=='<':
+						waiting6 = False
+						break
+					print("Please make a valid selection.")
+
+
+				while True:
+					print("\nWhat would you like to do?\n1. Add another line \n2. Edit another chart \n3. Return to home")
+					sel = raw_input(">> ")
+					if sel=='1':
+						waiting6 = True
+						break
+					elif sel=='2':
+						waiting5 = True
+						waiting6 = True
+						break
+					elif sel=='3':
+						waiting4 = False
 						break
 					print("Please make a valid selection.")
 

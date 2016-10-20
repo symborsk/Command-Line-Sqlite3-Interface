@@ -35,7 +35,7 @@ CREATE TABLE charts (
   chart_id	CHAR(5), 
   hcno		CHAR(5), 
   adate		DATE,
-  edate		DATE,
+  ddate		DATE,
   PRIMARY KEY (chart_id),
   FOREIGN KEY (hcno) REFERENCES patients
 );
