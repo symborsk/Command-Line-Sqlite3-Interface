@@ -247,20 +247,25 @@ ORDER BY ? DESC'''
 
 				# Handle input cases
 				if len(options)==2:
+					# Search pressed
 					if sel=='1':
 						waiting1 = True
 						waiting3 = False
+					# Return pressed
 					elif sel=='2':
 						waiting3 = False
 					else:
 						print("Please select a proper option.")
 				else:
+					# Symptom pressed
 					if sel=='1':
 						print("\nPlease input the symptom:")
 						addSymptom(hcno, chart_id, raw_input(">> "))
+					# Diagnosis pressed
 					elif sel=='2':
 						print("\nPlease input the diagnosis")
 						addDiagnosis(hcno, chart_id, raw_input(">> "))
+					# Medication pressed
 					elif sel=='3':
 						print("\nPlease enter the medication start date: ")
 						start = raw_input(">> ")
@@ -271,10 +276,12 @@ ORDER BY ? DESC'''
 						print("Please enter the drug name: ")
 						drug = raw_input(">> ")
 						addMedication(hcno, chart_id, start, end, amount, drug) 
+					# Search pressed
 					elif sel=='4':
 						waiting1 = True
 						waiting3 = False
 						break
+					# Return pressed
 					elif sel=='5':
 						waiting3 = False
 						break
