@@ -9,7 +9,7 @@ while waiting:
 	print("Please log in below. (Note: Passwords are case sensitive!)")
 	username = raw_input("\nUsername: ")
 	password = raw_input("Password: ")
-	passHash = hashlib.md5(password).hexdigest()
+	passHash = hashlib.sha224(password).hexdigest()
 
 	# Connect to the database
 	conn = sqlite3.connect('hospital.db')
