@@ -1,9 +1,6 @@
 import sqlite3
 import time
-
-'''
-TODO: change all edate to ddate
-'''
+import getpass
 
 # Returns true if amount check passes, false if it fails
 def amountCheck ( hcno, amount, drug_name):
@@ -68,8 +65,6 @@ def allergyCheck( hcno, drug_name):
 					return False
 				print("Please make a valid selection.")
 
-
-
 def addSymptom ( hcno, chart_id):
 	print("\nPlease input the symptom:")
 	symptom = raw_input(">> ")
@@ -103,6 +98,156 @@ def addMedication ( hcno, chart_id):
 		cursor.execute(sql, params)
 		conn.commit()
 
+def addLine( hcno, chart_id):
+	while True:
+		print("\nWhat kind of line would you like to enter?")
+		print("S = Symptom \nD = Diagnosis \nM = Medication")
+		sel = raw_input(">> ").lower()
+		if sel=='s':
+			addSymptom(hcno, chart_id)
+			waiting6 = False
+			break
+		elif sel=='d':
+			addDiagnosis(hcno, chart_id)
+			waiting6 = False
+			break
+		elif sel=='m':
+			addMedication(hcno, chart_id)
+			waiting6 = False
+			break
+		elif sel=='<':
+			waiting6 = False
+			break
+		print("Please make a valid selection.")
+
+def getChartList():
+	while True:
+		# Get HCNO
+		print("\nPlease enter the desired patient health care number: ")
+		hcno = raw_input(">> ")
+				
+		# Check for return key
+		if hcno=="<":
+			return None
+		hcno = int(hcno)
+
+		# Execute the query
+		sql = '''SELECT * FROM charts WHERE hcno=? ORDER BY adate DESC'''
+		params = (hcno, )
+		cursor.execute(sql, params)
+
+		# Display the resultsc
+		chartList = cursor.fetchall()
+		if len(chartList)>0:
+			return chartList
+		print("Could not find records for that patient. Please try again.")
+
+def displayCharts( chartList):
+	# Show open charts
+	print ("\nOpen Charts\nChart # | Admission Date")
+	for chart in chartList:
+		if chart[3] == None:
+			string = chart[0].ljust(7) + ' | ' + chart[2].ljust(14)
+			print(string)
+
+	# Show closed charts
+	print ("\nClosed Charts\nChart # | Admission Date      | Departure Date")
+	for chart in chartList:
+		if chart[3] != None:
+			string = chart[0].ljust(7) + ' | ' + chart[2].ljust(14) + ' | ' + chart[3]
+			print(string)
+
+def displayChartHeader(selChart):
+	# Get parameters based on open/closed chart
+	isClosed = selChart[3]
+	options = list()
+	if isClosed==None:
+		barrier = '\n--------------------------------------'
+		chartStr = " CHART ID | HCNO     | Admission Date" + '\n ' + selChart[0].ljust(8) + ' | ' + str(selChart[1]).ljust(8) + ' | ' + selChart[2].ljust(19) + barrier 
+		options.append('1. Add a line')
+		options.append('2. Search for another chart')
+		options.append('3. Return to home')
+	else:
+		barrier = '\n----------------------------------------------------------'
+		chartStr = " CHART ID | HCNO     | Admission Date      | Departure Date\n " + selChart[0].ljust(8) + ' | ' + str(selChart[1]).ljust(8) + ' | ' + selChart[2].ljust(19) + ' | ' + selChart[3].ljust(19)+ barrier
+		options.append('1. Search for another chart')
+		options.append('2. Return to home')
+	print(chartStr)
+	return options
+
+def handleChartInput( options):
+	# Handle user input
+	while True:
+		print("\nPlease select an option")
+		for op in options:
+			print(op)
+		sel = raw_input(">> ")
+
+		# Handle chart dependant cases
+		if len(options)==2:
+			# Search pressed
+			if sel=='1':
+				return True
+			# Return pressed
+			elif sel=='2':
+				return False
+			else:
+				print("Please select a proper option.")
+
+		else:
+			# Add Line pressed
+			if sel=='1':
+				addLine(selChart[1], selChart[0])
+
+				# Handle next input
+				while True:
+					print("\nWhat would you like to do?\n1. Add another line \n2. Search for another chart \n3. Return to home")
+					sel = raw_input(">> ")
+					if sel=='1':
+						break
+					elif sel=='2':
+						return True
+					elif sel=='3':
+						return False
+					print("Please make a valid selection.")
+
+			# Search pressed
+			elif sel=='2':
+				return True
+			# Return pressed
+			elif sel=='3':
+				return False
+			else: print("Please select a proper option.")
+
+def getOpenChart():
+	while True:
+		print("\nPlease enter an open chart id:")
+		sel = raw_input(">> ")
+
+		if sel=="<": return None
+
+		sql = '''SELECT * FROM charts WHERE chart_id=? AND ddate IS NULL'''
+		params = (sel, )
+		selChart = cursor.execute(sql, params).fetchall()
+
+		if len(selChart)>0:
+			return selChart[0]
+		print("You entered an invalid chart id.")
+
+def getChart( chartList):
+	while True:
+		print("\nPlease enter a chart id:")
+		sel = raw_input(">> ")
+		
+		if sel=="<":
+			return None
+
+		for chart in chartList:
+			if sel in chart:
+				return chart
+
+		print("You entered an invalid chart id.")
+
 def getLineString( lineList):
 	lineString = str()
 	for line in lineList:
@@ -127,12 +272,9 @@ def getLineString( lineList):
 	return lineString
 
 def getLineList( hcno, chart_id):
-	# Display the medical information for the selected chart
-	sql = '''SELECT *
-FROM {}
-WHERE hcno=?
-AND chart_id=?
-ORDER BY ? DESC'''
+	# Create sql query
+	sql = '''SELECT * FROM {} WHERE hcno=? AND chart_id=? ORDER BY ? DESC'''
+
 	# Create symptom list
 	cursor.execute(sql.format('symptoms'), (hcno, chart_id, 'obs_date'))
 	sList = cursor.fetchall()
@@ -162,203 +304,82 @@ global conn
 global cursor
 conn = sqlite3.connect('hospital.db')
 cursor = conn.cursor()
-waiting0 = True
+waiting = True
 
 # Global vars from login
 global name
 global staff_id
 
-while waiting0:
+while waiting:
 	# Present the user with their options
 	name = "Brett" # NAME PASSED FROM LOGIN HERE
 	staff_id = 1
-	print "\nWelcome,", name, '''\nPlease select one of the following: 
-\n1. Search patient records
-2. Edit chart
-3. Change password
-4. Log out'''
+	print "\nWelcome,", name, "\nPlease select one of the following: \n1. Search patient records\n2. Edit chart\n3. Log out"
 
 	# Prompt the user for input
 	choice = raw_input(">> ")
 
-	# Handle the users input
-	waiting1 = True
-	while waiting1:
-		if choice=='1':
-			waiting1 = False;
-
-			# Determine which patient the user needs charts for
-			print("\nPlease enter the desired patient health care number: ")
-			hcno = int(raw_input(">> "))
-
-			if hcno=="<":
+	# Case 1: Search for patient records
+	if choice=='1':
+		waiting1=True
+		while waiting1:
+			# Get chart list for a selected patient
+			chartList = getChartList()
+			if chartList==None:
 				break
-			
-			# Execute the query
-			sql = '''SELECT chart_id, adate, ddate
-FROM charts
-WHERE hcno=?
-ORDER BY adate DESC'''
-			params = (hcno, )
-			cursor.execute(sql, params)
-
-			# Display the resultsc
-			chartList = cursor.fetchall()
-
-			# Show open charts
-			print ("\nOpen Charts\nChart # | Admission Date")
-			for chart in chartList:
-				if chart[2] == None:
-					string = chart[0].ljust(7) + ' | ' + chart[1].ljust(14)
-					print(string)
-
-			# Show closed charts
-			print ("Closed Charts\nChart # | Admission Date | Departure Date")
-			for chart in chartList:
-				if chart[2] != None:
-					string = chart[0].ljust(7) + ' | ' + chart[1].ljust(14) + ' | ' + chart[2]
-					print(string)
 
 			# Allow the user to select a chart
-			waiting2 = True
-			viewID = None
 			global selChart
-			while waiting2:
-				print("\nSelect the chart number you want to view:")
-				chart_id = raw_input(">> ")
-				if chart_id=="<":
-					waiting1 = True
-					break;
-				for chart in chartList:
-					if chart[0]==chart_id:
-						viewID = chart[0]
-						selChart = chart
-						waiting2 = False
-						print("")
-				if waiting2: print("Please select a proper chart number.")
+			displayCharts(chartList)
+			selChart = getChart(chartList)
+			if selChart==None:
+				break
 
-			barrier = '\n--------------------------------------'
-			chartStr = " CHART ID | HCNO     | Admission Date" + '\n ' + selChart[0].ljust(8) + ' | ' + str(hcno).ljust(8) + ' | ' + selChart[1] + barrier 
-			print(chartStr)
+			# Display valid chart header and get options
+			options = displayChartHeader(selChart)
 
 			''' Sorting all entries by their entry date. Adapted from
 			http://stackoverflow.com/questions/20183069/how-to-sort-multidimensional-array-by-column
 			on Oct 19 2016'''
-			lineList = getLineList(hcno, selChart[0])
+			lineList = getLineList(selChart[1], selChart[0])
 			lineList = sorted(lineList, key = lambda x: x[4])
 			lineString = getLineString(lineList)
 			print(lineString)
+				
+			# Handle users next input
+			waiting1 = handleChartInput(options)
 
-			# Get user options
-			options = list()
-			if (selChart[2] == None):
-				options.append('1. Add a symptom')
-				options.append('2. Add a diagnosis')
-				options.append('3. Add a medication')
-				options.append('4. Search for another chart')
-				options.append('5. Return to home')
-			else:
-				options.append('1. Search for another chart')
-				options.append('2. Return to home')
+	# Case 2: Edit open chart
+	elif choice=='2':
+		sel = 2
+		while sel<3:
+			# Get a proper chart from the user
+			if sel==2: selChart = getOpenChart()
+			if selChart==None:
+				break
 
-			# Handle user input
-			waiting3 = True
-			while waiting3:
-				print("\nPlease select an option")
-				for op in options:
-					print(op)
+			# Add line
+			addLine(selChart[1], selChart[0])
+
+			# Handle next input
+			while True:
+				print("\nWhat would you like to do?\n1. Add another line \n2. Edit another chart \n3. Return to home")
 				sel = raw_input(">> ")
+				if sel=='1':
+					break
+				elif sel=='2':
+					break
+				elif sel=='3':
+					waiting0 = False
+					break
+				print("Please make a valid selection.")
 
-				# Handle input cases
-				if len(options)==2:
-					# Search pressed
-					if sel=='1':
-						waiting1 = True
-						waiting3 = False
-					# Return pressed
-					elif sel=='2':
-						waiting3 = False
-					else:
-						print("Please select a proper option.")
-				else:
-					# Symptom pressed
-					if sel=='1':
-						addSymptom(hcno, chart_id)
-					# Diagnosis pressed
-					elif sel=='2':
-						addDiagnosis(hcno, chart_id)
-					# Medication pressed
-					elif sel=='3':
-						addMedication(hcno, chart_id) 
-					# Search pressed
-					elif sel=='4':
-						waiting1 = True
-						waiting3 = False
-						break
-					# Return pressed
-					elif sel=='5':
-						waiting3 = False
-						break
-					else:
-						print("Please select a proper option.")
-		elif choice=='2':
-			waiting1 = False
-			waiting4 = True
-			waiting5 = True
-			waiting6 = True
-			while waiting4:
-				# Get a proper chart from the user
-				while waiting5:
-					print("\nPlease enter an open chart id:")
-					sel = raw_input(">> ")
-					sql = '''SELECT * FROM charts WHERE chart_id=? AND ddate IS NULL'''
-					params = (sel, )
-					selChart = cursor.execute(sql, params).fetchall()
-					if len(selChart)>0:
-						selChart = selChart[0]
-						waiting5 = False
-						break
-					print("You entered an invalid chart id.")
-
-				# Request which kind of line user would like to add
-				while waiting6:
-					print("\nWhat kind of line would you like to enter?")
-					print("S = Symptom \nD = Diagnosis \nM = Medication")
-					sel = raw_input(">> ").lower()
-					if sel=='s':
-						addSymptom(selChart[1], selChart[0])
-						waiting6 = False
-						break
-					elif sel=='d':
-						addDiagnosis(selChart[1], selChart[0])
-						waiting6 = False
-						break
-					elif sel=='m':
-						addMedication(selChart[1], selChart[0])
-						waiting6 = False
-						break
-					elif sel=='<':
-						waiting6 = False
-						break
-					print("Please make a valid selection.")
-
-
-				while True:
-					print("\nWhat would you like to do?\n1. Add another line \n2. Edit another chart \n3. Return to home")
-					sel = raw_input(">> ")
-					if sel=='1':
-						waiting6 = True
-						break
-					elif sel=='2':
-						waiting5 = True
-						waiting6 = True
-						break
-					elif sel=='3':
-						waiting4 = False
-						break
-					print("Please make a valid selection.")
-
-
+	# Case 3: Log out
+	elif choice=='3':
+		break
+	else:
+		print("Please make a valid selection")
 
 
 conn.close()
+quit()
