@@ -1,13 +1,12 @@
 import sqlite3
 import hashlib
-
-# Looping variables
 waiting1 = True
 waiting2 = True
 
-print("\nWelcome to the Hospital User Creation Service.")
-print("Please enter \".quit\" at any time to exit.")
+conn = sqlite3.connect('hospital.db')
+cursor = conn.cursor()
 
+print("\nWelcome to the Hospital User Creation Service.")
 # Get user credentials
 name = str(raw_input("\nPlease enter your name: "))
 while waiting1:
@@ -21,12 +20,8 @@ while waiting1:
 
 while waiting2: 
 	username = str(raw_input("Please enter a username: "))
-	password = str(raw_input("Please enter a password: "))
-
-	# Check to make sure there are no users with this log in 
-	conn = sqlite3.connect('hospital.db')
-	cursor = conn.cursor()
-
+	password = str(raw_input("Please enter a password: ")) 
+	
 	params = (username, )
 	cursor.execute('SELECT * FROM staff WHERE login=?', params)
 
@@ -35,10 +30,11 @@ while waiting2:
 		# Create password hash
 		passHash = hashlib.sha224(password).hexdigest()
 
+		StaffId = GenerateRandomStaffId()
 		# Create the query to store this users data
-		sql = '''INSERT INTO staff(role, name, login, password)
-				 VALUES (?, ?, ?, ?)'''
-		params = (role, name, username, str(passHash))
+		sql = '''INSERT INTO staff(staff_id, role, name, login, password)
+				 VALUES (?, ?, ?, ?, ?)'''
+		params = (StaffId, role, name, username, str(passHash))
 		cursor.execute(sql, params)
 		conn.commit()
 		waiting2 = False
@@ -47,3 +43,11 @@ while waiting2:
 	else: 
 		print("Username already exists! Please try again.")
 conn.close()
+
+
+def GenerateRandomStaffId():
+	while True:
+		random_key = "".join(random.choice(ascii_uppercase + ascii_lowercase + digits ) for i in range(5))
+		cursor.execute('SELECT * from staff where staff_id = ?', (random_key,))
+		if(len(cursor.fetchall()) == 0):
+			return random_key
