@@ -43,11 +43,11 @@ def Login():
 			conn.close()
 			ForwardMenu()
 		else:
-			waiting = True
-			while waiting:
-				userInput  = raw_input("There was an error logging in. Would you like to try again?(y/n)")
+			waiting1 = True
+			while waiting1:
+				userInput  = raw_input("There was an error logging in. Would you like to try again?(y/n)\n")
 				if( userInput.lower() == "y"):
-					waiting = False;
+					waiting1 = False;
 				elif( userInput.lower() == "n"):
 					print("Exiting program. Goodbye.")
 					conn.close()
@@ -58,7 +58,6 @@ def Login():
 def ForwardMenu():
 
 	if( staff_role == "D"):
-		#TODO: Doctors menu call
 		print("\nWelcome Dr. %s. \nRouting to the doctor menu..." % (staff_name))
 		doctorMenu(staff_id, staff_name)
 	elif(staff_role =="N"):

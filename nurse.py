@@ -6,20 +6,57 @@ from string import ascii_uppercase, digits, ascii_lowercase
 global HOME
 HOME = ".home"
 
+
+def InitializeNurseMenu(name, s_id):
+	global staff_name
+	global staff_id
+	global conn
+	global cursor
+
+	staff_name = name
+	staff_id = s_id
+	conn = sqlite3.connect('hospital.db')
+	cursor = conn.cursor()
+
+	NurseMenu()
+
+#main function call 
+def NurseMenu():
+	print("Welcome Nurse %s to the nursing department. Please type .home at any point to return to this main screen." %(staff_name))
+	
+	waiting_selection = True
+	while waiting_selection:
+		sel = raw_input("\nWhat would you like to do?\n1. Create Chart\n2. Close Chart\n3. List Charts for patient\n4. Add Symptom to Chart\n5. Logout\n")
+
+		if sel == "1": 
+			healthCareNo = GetHealthCareNumber()
+			CreateChart(healthCareNo)
+		elif sel == "2":
+			CloseChart()
+		elif sel == "3":
+			searchPatientRecords()
+		elif sel == "4":
+			editOpenChart()
+		elif sel == "5":
+			conn.close()	
+			return
+		else:
+			print("Invalid selection try again")
+
 # Option functions
 def searchPatientRecords():
 	# Get the desired patient
 	global patient
 	global chartList
 	patient, chartList = getPatientData()
-	if patient==-1: return nurseMenu()
+	if patient==-1: return 
 
 	# Display the chartList
 	displayCharts(chartList)
 
 	# Allow user to select a chart
 	chart = getChart(chartList)
-	if chart==-1: return nurseMenu()
+	if chart==-1: return 
 
 	# Get and display chart data
 	options = prepChart(chart)
@@ -34,7 +71,7 @@ def searchPatientRecords():
 def editOpenChart():
 	# Get the user to select an open chart
 	chart = getOpenChart()
-	if chart==-1: return nurseMenu()
+	if chart==-1: return 
 
 	# Add a line for the chart
 	return addSymptom(chart[1], chart[0])
@@ -44,7 +81,7 @@ def getPatientData():
 	while True:
 		print("\nPlease input a health care number: ")
 		sel = raw_input(">> ").lower()
-		if sel==HOME:
+		if sel == HOME:
 			return -1, -1
 
 		else:
@@ -70,7 +107,7 @@ def getPatientData():
 def getChart( chartList):
 	while True:
 		print("\nPlease enter a chart id:")
-		sel = raw_input(">> ").lower()
+		sel = raw_input(">> ")
 		
 		if sel==HOME:
 			return -1
@@ -105,8 +142,7 @@ def displayRecords(patient, chartList):
 
 	# Allow user to select a chart
 	chart = getChart(chartList)
-	if chart==-1: return nurseMenu()
-
+	if chart==-1: return 
 	# Get and display chart data
 	options = dislayChartHeader(chart)
 	lineList = getLineList(patient[0], chart[0])
@@ -210,7 +246,7 @@ def addSymptom ( hcno, chart_id):
 	symptom = raw_input(">> ")
 	if symptom==HOME:
 		print("Line not added")
-		return nurseMenu()
+		return 
 	sql = '''INSERT INTO symptoms VALUES (?, ?, ?, ?, ?)'''
 	params = (hcno, chart_id, staff_id, time.strftime("%Y-%m-%d %H:%M:%S"), symptom)
 	cursor.execute(sql, params)
@@ -224,7 +260,7 @@ def lineMenu ( hcno, chart_id):
 		print("1. Add another symptom \n2. Return to home")
 		sel = raw_input(">> ").lower()
 		if sel==HOME or sel=='2':
-			return nurseMenu()
+			return 
 		elif sel=='1':
 			return addSymptom(hcno, chart_id)
 
@@ -240,14 +276,14 @@ def chartMenu(chart, options):
 		
 		# Handle special keys
 		if sel==HOME:
-			return nurseMenu()
+			return 
 
 		# Handle closed chart input
 		if len(options)==2:
 			if sel=='1':
 				return searchPatientRecords()
 			elif sel=='2':
-				return nurseMenu()
+				return 
 			print("Please make a valid selection.")
 		# Handle open chart input
 		else:
@@ -256,48 +292,15 @@ def chartMenu(chart, options):
 			elif sel=='2':
 				return searchPatientRecords()
 			elif sel=='3':
-				return nurseMenu()
+				return 
 
 		print("Please make a valid selection.")
 
-#main function call 
-def InitializeNurseMenu(name, s_id):
-	global staff_name
-	global staff_id
-	global conn
-	global cursor
-
-	staff_name = name
-	staff_id = s_id
-	conn = sqlite3.connect('hospital.db')
-	cursor = conn.cursor()
-
-	NurseMenu()
-
-def NurseMenu():
-	print("Welcome Nurse %s to the nursing department. Please type HOME at any point to return to this main screen." %(staff_name))
-	
-	waiting_selection = True
-	while waiting_selection:
-		sel = raw_input("\nWhat would you like to do?\n1. Create Chart\n2. Close Chart\n3. List Charts for patient\n4. Add Symptom to Chart\n5. Logout\n")
-
-		if sel == "1": 
-			CreateChartPreCheck()
-		elif sel == "2":
-			CloseChart()
-		elif sel == "3":
-			searchPatientRecords()
-		elif sel == "4":
-			editOpenChart()
-		elif sel == "5":
-			conn.close()	
-			return
-		else:
-			print("Invalid selection try again")
-
-def CreateChartPreCheck():
+# Find the user input and compare it to see if it has any open charts
+# If there is already an open table give the user the option to close it
+def GetHealthCareNumber():
 	health_care_no = raw_input("\nWhat is the patient health care no: ")
-	if(health_care_no == "HOME"):
+	if(health_care_no ==  HOME):
 		return
 
 	# find all of the open tables of th
@@ -324,58 +327,67 @@ def CreateChartPreCheck():
 		cursor.execute('UPDATE charts set ddate = datetime(?) where chart_id = ?', params)
 		conn.commit()
 
-	CreateChart(health_care_no)
+	return health_care_no
 
+#Create a new open chart for patient of health care no healthNo
+#If that patient doesnt exist create it first
 def CreateChart(healthNo):
 	chartId = GenerateRandomChartId()
 	cursor.execute('SELECT * from patients where hcno = ?', (healthNo, ))
 
 	res = cursor.fetchall()
 	if(len(res) == 0):
+		CreatePatient(healthNo)
+	
+	#create table
+	params = (chartId, healthNo, 'now')
+	InsertChartTableIntoDB(params)
+
+#Create a patient with health care number healthNo
+def CreatePatient(healthNo):
 		print("\nPatient is not in the system adding him now: ")
 		
 		name = raw_input("\nplease enter patients name: ")
-		if(name == "HOME"):
+		if(name == HOME):
 			return
 		
 		age_group = raw_input("\nplease enter patients age group: ")
-		if(name == "HOME"):
+		if(name == HOME):
 			return
 		
 		address = raw_input("\nplease enter patient's address: ")
-		if(name == "HOME"):
+		if(name == HOME):
 			return
 		
 		phone_number = raw_input("\nplease enter patient's phone number(1112223333): ")
 		while(len(phone_number) != 10 or not phone_number.isdigit()):
-			if(phone_number == "HOME"):
+			if(phone_number == HOME):
 				return
 			print("incorrect phone number format please re enter")
 			phone_number = raw_input("\nplease enter patient's phone number(1112223333): ")
 		
 		emg_number = raw_input("\nplease enter patient's  emergency phone number((1112223333): ")
-		while(len(emg_number) != 10 or not emg_phone_number.isdigit()):
-			if(emg_number == "HOME"):
+		while(len(emg_number) != 10 or not emg_number.isdigit()):
+			if(emg_number == HOME):
 				return
 			print("incorrect phone number format please re enter")
 			emg_number = raw_input("\n please enter patient's phone number(1112223333): ")
 		
 		params = (healthNo, name, age_group, address, phone_number, emg_number)
 		cursor.execute('INSERT into patients(hcno, name, age_group, address, phone, emg_phone) VALUES(?,?,?,?,?,?)', params)
-	
-	#create table
-	params = (chartId, healthNo, 'now')
-	InsertChartTableIntoDB(params)
+		conn.commit()
 
+#Insert tuple params in chart table in DB
 def InsertChartTableIntoDB(params):
 		cursor.execute('INSERT into charts(chart_id, hcno, adate) VALUES( ?, ?, datetime(?))', params)
 		conn.commit()
 		string = ("\nChart {} created for patient with hcno {}").format(params[0], params[1])
 		print(string)
 
-def CloseChartPreCheck():
+#Ask the user a for a health care no. and then close any open table with that value
+def CloseChart():
 	health_care_no = raw_input("\nWhat is the patient health care no: ");
-	if(health_care_no == "HOME"):
+	if(health_care_no == ".home"):
 		return
 
 	# find all of the open tables of th
@@ -384,14 +396,14 @@ def CloseChartPreCheck():
 	
 	# this means that  there is already an open table for that patient
 	if len(res) == 1:
-		params = ('now', res[0][1])
-		cursor.execute('UPDATE charts set ddate = datetime(?) where chart_id = ?', params)
+		cursor.execute('UPDATE charts set ddate = datetime() where chart_id = ?', (res[0][1], ))
 		conn.commit()
 		waiting_selection = False
 		print("\nChart closed.")
 	else:
 		print("Patient with that health care number does not have any open charts.")
 
+#Generate a random chart ID for primary key of chart
 def GenerateRandomChartId():
 
 	while True:

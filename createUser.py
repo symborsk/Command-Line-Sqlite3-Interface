@@ -4,9 +4,6 @@ import getpass
 import random
 from string import ascii_uppercase, digits, ascii_lowercase
 
-
-
-
 def GenerateRandomStaffId():
 	while True:
 		random_key = "".join(random.choice(ascii_uppercase + ascii_lowercase + digits ) for i in range(5))
@@ -28,7 +25,7 @@ while waiting1:
 	role = str(raw_input("Please enter your role: "))
 
 	# Check role value
-	if role == "D" or role == "N" or role == "A":
+	if role.lower() == "d" or role.lower() == "n" or role.lower() == "a":
 		waiting1= False
 	else:
 		print("Please enter a proper role.")
