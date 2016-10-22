@@ -2,6 +2,7 @@ import sqlite3
 import hashlib
 import random
 import getpass
+from doctor import doctorMenu
 from nurse import InitializeNurseMenu
 from string import ascii_uppercase, digits, ascii_lowercase
 
@@ -58,14 +59,15 @@ def ForwardMenu():
 
 	if( staff_role == "D"):
 		#TODO: Doctors menu call
-		print("Welcome Doctor %s. Routing to the doctor's menu please type .quit at any time to return to login screen" % (staff_name))
+		print("\nWelcome Dr. %s. \nRouting to the doctor menu..." % (staff_name))
+		doctorMenu(staff_id, staff_name)
 	elif(staff_role =="N"):
 		InitializeNurseMenu(staff_name, staff_id)
 	elif(staff_role == "A"):
 		#Todo: Admin Staff
-		print("Welcome Admin Staff %s. Routing to the Admin Staff's menu please type .quit at any time to return to login screen" % (staff_name))
+		print("\nWelcome Admin Staff %s. \nRouting to the admin menu..." % (staff_name))
 	else:
-		print("Something went wrong please re-login")
+		print("\nSomething went wrong please re-login")
 	Login()
 
 Login()

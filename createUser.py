@@ -1,5 +1,20 @@
 import sqlite3
 import hashlib
+import getpass
+import random
+from string import ascii_uppercase, digits, ascii_lowercase
+
+
+
+
+def GenerateRandomStaffId():
+	while True:
+		random_key = "".join(random.choice(ascii_uppercase + ascii_lowercase + digits ) for i in range(5))
+		cursor.execute('SELECT * from staff where staff_id = ?', (random_key,))
+		if(len(cursor.fetchall()) == 0):
+			return random_key
+
+
 waiting1 = True
 waiting2 = True
 
@@ -20,7 +35,7 @@ while waiting1:
 
 while waiting2: 
 	username = str(raw_input("Please enter a username: "))
-	password = str(raw_input("Please enter a password: ")) 
+	password = str(getpass.getpass("Please enter a password: ")) 
 	
 	params = (username, )
 	cursor.execute('SELECT * FROM staff WHERE login=?', params)
@@ -43,11 +58,3 @@ while waiting2:
 	else: 
 		print("Username already exists! Please try again.")
 conn.close()
-
-
-def GenerateRandomStaffId():
-	while True:
-		random_key = "".join(random.choice(ascii_uppercase + ascii_lowercase + digits ) for i in range(5))
-		cursor.execute('SELECT * from staff where staff_id = ?', (random_key,))
-		if(len(cursor.fetchall()) == 0):
-			return random_key
