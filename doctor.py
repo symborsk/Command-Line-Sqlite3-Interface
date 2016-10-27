@@ -97,6 +97,7 @@ def getPatientData():
 
 # For selecting a specific patient chart
 def getChart( chartList):
+	# Get valid input
 	while True:
 		print("\nPlease enter a chart id:")
 		sel = raw_input(">> ").lower()
@@ -104,6 +105,7 @@ def getChart( chartList):
 		if sel==HOME:
 			return -1
 
+		# Check if chart was in chartList
 		for chart in chartList:
 			if sel==chart[0]:
 				return chart
@@ -112,16 +114,20 @@ def getChart( chartList):
 
 # For selecting a specific open chart
 def getOpenChart():
+	# Get valid input
 	while True:
 		print("\nPlease enter an open chart id:")
 		sel = raw_input(">> ").lower()
 
-		if sel==HOME: return -1
+		if sel==HOME:
+			return -1
 
+		# Perform query
 		sql = '''SELECT * FROM charts WHERE chart_id=? AND ddate IS NULL'''
 		params = (sel, )
 		selChart = cursor.execute(sql, params).fetchall()
 
+		# Check if there was a chart
 		if len(selChart)>0:
 			return selChart[0]
 		print("You entered an invalid chart id.")
@@ -170,6 +176,7 @@ def prepChart(selChart):
 	options = list()
 	next = '\n Type | StaffID | Date Added'
 	
+	# Build header strings / options list
 	if isClosed==None:
 		barrier = '\n------------------------------------------'
 		chartStr = " CHART ID | HCNO     | Admission Date" + '\n ' + selChart[0].ljust(8) + ' | ' + str(selChart[1]).ljust(8) + ' | ' + selChart[2].ljust(19) + barrier + next
@@ -238,13 +245,17 @@ def getLineList( hcno, chart_id):
 
 ''' Medication Check Functions '''
 def amountCheck ( hcno, amount, drug_name):
+	# Get patient age group
 	sql = '''SELECT age_group FROM patients WHERE hcno=?'''
 	params = (hcno, )
 	age_group = str(cursor.execute(sql, params).fetchone()[0])
 
+	# Get drug dosage data
 	sql = '''SELECT sug_amount FROM dosage WHERE age_group=? AND drug_name=?'''
 	params = (age_group, drug_name)
 	sug_amount = int(cursor.execute(sql, params).fetchone()[0])
+
+	# Handle check cases
 	if amount > sug_amount:
 		while True:
 			print("\nYou have entered an amount greater than the suggested amount of " + str(sug_amount) + ".")
@@ -271,6 +282,7 @@ def allergyCheck( hcno, drug_name):
 		drugList.append(str(al[0]))
 	# Check if patient is allergic to drug
 	if drug_name in drugList:
+		# Get valid input
 		while True:
 			print("You have entered a drug this patient is allergic to: " + drug_name)
 			print("Would you like to proceed? (Y/n)")
@@ -291,9 +303,11 @@ def allergyCheck( hcno, drug_name):
 			if len(cursor.execute(sql, params).fetchall())>0:
 				causedInferred.append(drug)
 
+		# No inferred allergies
 		if len(causedInferred)==0:
 			return True
 		else:
+			# Loop until we get a proper response from user
 			while True:
 				print("\nDue to the patients reported allergies of: ")
 				for d in causedInferred: print(d)
@@ -312,11 +326,14 @@ def allergyCheck( hcno, drug_name):
 ''' Chart Edit Functions '''
 
 def addSymptom ( hcno, chart_id):
+	# Get the symptom
 	print("\nPlease input the symptom:")
 	symptom = raw_input(">> ").lower()
 	if symptom==HOME:
 		print("Line not added")
 		return doctorMenu(staff_id, staff_name)
+
+	# Add the symptom
 	sql = '''INSERT INTO symptoms VALUES (?, ?, ?, ?, ?)'''
 	params = (hcno, chart_id, staff_id, time.strftime("%Y-%m-%d %H:%M:%S"), symptom)
 	cursor.execute(sql, params)
@@ -324,11 +341,14 @@ def addSymptom ( hcno, chart_id):
 	return lineMenu(hcno, chart_id)
 
 def addDiagnosis ( hcno, chart_id):
+	# Get diagnosis info
 	print("\nPlease input the diagnosis")
 	diagnosis = raw_input(">> ").lower()
 	if diagnosis==HOME:
 		print("Line not added.")
 		return doctorMenu(staff_id, staff_name)
+
+	# Add the diagnosis
 	sql = '''INSERT INTO diagnoses VALUES (?, ?, ?, ?, ?)'''
 	params = (hcno, chart_id, staff_id, time.strftime("%Y-%m-%d %H:%M:%S"), diagnosis)
 	cursor.execute(sql, params)
@@ -336,6 +356,7 @@ def addDiagnosis ( hcno, chart_id):
 	return lineMenu(hcno, chart_id)
 
 def addMedication ( hcno, chart_id):
+	# Get medication info
 	print("\nPlease enter the medication start date: ")
 	start = raw_input(">> ")
 	print("Please enter the medication end date: ")
@@ -355,12 +376,14 @@ def addMedication ( hcno, chart_id):
 		conn.commit()
 	else: print("Line was not added.")
 
+	# Return to home
 	if test1==0 or test2 ==0:
 		return doctorMenu(staff_id, staff_name)
 
 	return lineMenu(hcno, chart_id)
 
 def addLine ( hcno, chart_id):
+	# Loop continuously until we receive proper input
 	while True:
 		print("\nWhat kind of line would you like to enter?")
 		print("S = Symptom \nD = Diagnosis \nM = Medication")
