@@ -3,6 +3,8 @@ import time
 
 conn = sqlite3.connect('hospital.db')
 cursor = conn.cursor()
+global HOME
+HOME = ".home"
 
 # Make sure the user has selected a valid drug
 def getDrug():
@@ -89,5 +91,31 @@ def Admin4():
 	for r in results:
 		print("Diagnosis: " + str(r[0]).ljust(16) + "Average: " + str(r[1]))
 
+def ListDiagnoses():
+	drug = raw_input("Please enter medication you wish to search: ")
+	if drug == HOME: 
+		return 
+	#run a query for each medication and add it with repeats
+	query = '''SELECT diagnosis, AVG(medications.amount) as average from medications, diagnoses where medications.chart_id = diagnoses.chart_id 
+																		           and drug_name = ? 
+																		           and diagnoses.ddate <= medications.mdate
+																		           GROUP BY diagnosis 
+																		           ORDER BY average DESC '''
+	cursor.execute(query, (drug, ))
+	temp = cursor.fetchall()
+	print("Diagnoses that have been precribed {} (ordered by largest average amount prescribed per diagnoses): ".format(drug))
+	for result in temp:
+		print(result[0])
 
-Admin4()
+	while True:
+		user = raw_input("Would you like to enter search another diagnosis(y/n)");
+		if(user.lower() == "y"):
+			ListMeds()
+			return;
+		elif(user.lower() == "n"  or user.lower() == HOME):
+			return
+		else:
+			print("Invalid selection")
+
+
+ListDiagnoses()

@@ -4,6 +4,7 @@ import random
 import getpass
 from doctor import doctorMenu
 from nurse import InitializeNurseMenu
+from admin import AdminMenu
 from string import ascii_uppercase, digits, ascii_lowercase
 
 def Login():
@@ -58,13 +59,11 @@ def Login():
 def ForwardMenu():
 
 	if( staff_role == "D"):
-		print("\nWelcome Dr. %s. \nRouting to the doctor menu..." % (staff_name))
 		doctorMenu(staff_id, staff_name)
 	elif(staff_role =="N"):
 		InitializeNurseMenu(staff_name, staff_id)
 	elif(staff_role == "A"):
-		#Todo: Admin Staff
-		print("\nWelcome Admin Staff %s. \nRouting to the admin menu..." % (staff_name))
+		AdminMenu(staff_name, staff_id)
 	else:
 		print("\nSomething went wrong please re-login")
 	Login()
