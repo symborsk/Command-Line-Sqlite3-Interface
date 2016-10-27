@@ -168,15 +168,17 @@ def prepChart(selChart):
 	# Get parameters based on open/closed chart
 	isClosed = selChart[3]
 	options = list()
+	next = '\n Type | StaffID | Date Added'
+	
 	if isClosed==None:
-		barrier = '\n--------------------------------------'
-		chartStr = " CHART ID | HCNO     | Admission Date" + '\n ' + selChart[0].ljust(8) + ' | ' + str(selChart[1]).ljust(8) + ' | ' + selChart[2].ljust(19) + barrier 
+		barrier = '\n------------------------------------------'
+		chartStr = " CHART ID | HCNO     | Admission Date" + '\n ' + selChart[0].ljust(8) + ' | ' + str(selChart[1]).ljust(8) + ' | ' + selChart[2].ljust(19) + barrier + next
 		options.append('1. Add a line')
 		options.append('2. Search for another chart')
 		options.append('3. Return to home')
 	else:
 		barrier = '\n----------------------------------------------------------'
-		chartStr = " CHART ID | HCNO     | Admission Date      | Departure Date\n " + selChart[0].ljust(8) + ' | ' + str(selChart[1]).ljust(8) + ' | ' + selChart[2].ljust(19) + ' | ' + selChart[3].ljust(19)+ barrier
+		chartStr = " CHART ID | HCNO     | Admission Date      | Departure Date\n " + selChart[0].ljust(8) + ' | ' + str(selChart[1]).ljust(8) + ' | ' + selChart[2].ljust(19) + ' | ' + selChart[3].ljust(19)+ barrier + next
 		options.append('1. Search for another chart')
 		options.append('2. Return to home')
 	print(chartStr)
@@ -187,7 +189,7 @@ def getChartString( lineList):
 	lineString = str()
 	for line in lineList:
 		# Create and print line string
-		string = line[2] + ' '
+		string = line[0]
 		for element in line[3:]:
 			# Format the element to a uniform length
 			element = str(element)
@@ -197,10 +199,8 @@ def getChartString( lineList):
 				element = element.ljust(16)
 			elif len(element)>8:
 				element = element.ljust(12)
-			elif len(element)>4:
-				element = element.ljust(8)
 			else:
-				element = element.ljust(4)
+				element = element.ljust(8)
 			string += '| ' + element
 		lineString += string + '\n'
 
@@ -216,21 +216,21 @@ def getLineList( hcno, chart_id):
 	sList = cursor.fetchall()
 	symList = tuple()
 	for sym in sList:
-		symList += ((' S ',) + sym, )
+		symList += (('  S   ',) + sym, )
 
 	# Create diagnoses list
 	cursor.execute(sql.format('diagnoses'), (hcno, chart_id, 'ddate'))
 	dList = cursor.fetchall()
 	diaList = tuple()
 	for dia in dList:
-		diaList += ((' D ', ) + dia, )
+		diaList += (('  D   ', ) + dia, )
 
 	# Create medications list
 	cursor.execute(sql.format('medications'), (hcno, chart_id, 'mdate'))
 	mList = cursor.fetchall()
 	medList = tuple()
 	for med in mList:
-		medList += ((' M ', ) + med, )
+		medList += (('  M   ', ) + med, )
 
 	lineList = symList + diaList + medList
 	return lineList
@@ -313,7 +313,7 @@ def allergyCheck( hcno, drug_name):
 
 def addSymptom ( hcno, chart_id):
 	print("\nPlease input the symptom:")
-	symptom = raw_input(">> ")
+	symptom = raw_input(">> ").lower()
 	if symptom==HOME:
 		print("Line not added")
 		return doctorMenu(staff_id, staff_name)
@@ -325,7 +325,7 @@ def addSymptom ( hcno, chart_id):
 
 def addDiagnosis ( hcno, chart_id):
 	print("\nPlease input the diagnosis")
-	diagnosis = raw_input(">> ")
+	diagnosis = raw_input(">> ").lower()
 	if diagnosis==HOME:
 		print("Line not added.")
 		return doctorMenu(staff_id, staff_name)
@@ -343,7 +343,7 @@ def addMedication ( hcno, chart_id):
 	print("Please enter the daily amount: ")
 	amount = int(raw_input(">> "))
 	print("Please enter the drug name: ")
-	drug_name = raw_input(">> ")
+	drug_name = raw_input(">> ").lower()
 	
 	# If both tests pass we can add the medication
 	test1 = amountCheck(hcno, amount, drug_name)

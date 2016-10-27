@@ -22,11 +22,12 @@ def InitializeNurseMenu(name, s_id):
 
 #main function call 
 def NurseMenu():
-	print("Welcome Nurse %s to the nursing department. Please type .home at any point to return to this main screen." %(staff_name))
+	print("\nWelcome Nurse %s to the nursing department. Please type .home at any point to return to this main screen." %(staff_name))
 	
 	waiting_selection = True
 	while waiting_selection:
-		sel = raw_input("\nWhat would you like to do?\n1. Create Chart\n2. Close Chart\n3. List Charts for patient\n4. Add Symptom to Chart\n5. Logout\n")
+		print("\nWhat would you like to do? \n1. Create Chart \n2. Close Chart \n3. List Charts for patient \n4. Add Symptom to Chart \n5. Logout")
+		sel = raw_input(">> ")
 
 		if sel == "1": 
 			healthCareNo = GetHealthCareNumber()
@@ -174,15 +175,16 @@ def prepChart(selChart):
 	# Get parameters based on open/closed chart
 	isClosed = selChart[3]
 	options = list()
+	next = '\n Type | StaffID | Date Added'
 	if isClosed==None:
-		barrier = '\n--------------------------------------'
-		chartStr = " CHART ID | HCNO     | Admission Date" + '\n ' + selChart[0].ljust(8) + ' | ' + str(selChart[1]).ljust(8) + ' | ' + selChart[2].ljust(19) + barrier 
+		barrier = '\n------------------------------------------'
+		chartStr = " CHART ID | HCNO     | Admission Date" + '\n ' + selChart[0].ljust(8) + ' | ' + str(selChart[1]).ljust(8) + ' | ' + selChart[2].ljust(19) + barrier + next
 		options.append('1. Add a symptom')
 		options.append('2. Search for another chart')
 		options.append('3. Return to home')
 	else:
 		barrier = '\n----------------------------------------------------------'
-		chartStr = " CHART ID | HCNO     | Admission Date      | Departure Date\n " + selChart[0].ljust(8) + ' | ' + str(selChart[1]).ljust(8) + ' | ' + selChart[2].ljust(19) + ' | ' + selChart[3].ljust(19)+ barrier
+		chartStr = " CHART ID | HCNO     | Admission Date      | Departure Date\n " + selChart[0].ljust(8) + ' | ' + str(selChart[1]).ljust(8) + ' | ' + selChart[2].ljust(19) + ' | ' + selChart[3].ljust(19)+ barrier + next
 		options.append('1. Search for another chart')
 		options.append('2. Return to home')
 	print(chartStr)
@@ -193,7 +195,7 @@ def getChartString( lineList):
 	lineString = str()
 	for line in lineList:
 		# Create and print line string
-		string = line[2] + ' '
+		string = line[0]
 		for element in line[3:]:
 			# Format the element to a uniform length
 			element = str(element)
@@ -203,10 +205,8 @@ def getChartString( lineList):
 				element = element.ljust(16)
 			elif len(element)>8:
 				element = element.ljust(12)
-			elif len(element)>4:
-				element = element.ljust(8)
 			else:
-				element = element.ljust(4)
+				element = element.ljust(8)
 			string += '| ' + element
 		lineString += string + '\n'
 
@@ -222,21 +222,21 @@ def getLineList( hcno, chart_id):
 	sList = cursor.fetchall()
 	symList = tuple()
 	for sym in sList:
-		symList += ((' S ',) + sym, )
+		symList += (('  S   ',) + sym, )
 
 	# Create diagnoses list
 	cursor.execute(sql.format('diagnoses'), (hcno, chart_id, 'ddate'))
 	dList = cursor.fetchall()
 	diaList = tuple()
 	for dia in dList:
-		diaList += ((' D ', ) + dia, )
+		diaList += (('  D   ', ) + dia, )
 
 	# Create medications list
 	cursor.execute(sql.format('medications'), (hcno, chart_id, 'mdate'))
 	mList = cursor.fetchall()
 	medList = tuple()
 	for med in mList:
-		medList += ((' M ', ) + med, )
+		medList += (('  M   ', ) + med, )
 
 	lineList = symList + diaList + medList
 	return lineList
@@ -299,7 +299,8 @@ def chartMenu(chart, options):
 # Find the user input and compare it to see if it has any open charts
 # If there is already an open table give the user the option to close it
 def GetHealthCareNumber():
-	health_care_no = raw_input("\nWhat is the patient health care no: ")
+	print("\nWhat is the patient health care no: ")
+	health_care_no = raw_input(">> ")
 	if(health_care_no ==  HOME):
 		return
 
@@ -311,11 +312,11 @@ def GetHealthCareNumber():
 		
 		waiting_selection = True
 		while waiting_selection:
-			string = ("\nTable open already for patient {} with health care no {} would you like to close it Y/N: ").format( res[0][0], health_care_no)
-			sel = raw_input(string)
+			print(("\nTable open already for patient {} with health care no {} would you like to close it Y/N: ").format( res[0][0], health_care_no))
+			sel = raw_input(">> ")
 			
 			if sel.lower() =="n":
-				print("cancelling chart creation\n")
+				print("Cancelling chart creation\n")
 				initialize()
 			elif sel.lower() == "y":
 				waiting_selection = False
@@ -345,33 +346,39 @@ def CreateChart(healthNo):
 
 #Create a patient with health care number healthNo
 def CreatePatient(healthNo):
-		print("\nPatient is not in the system adding him now: ")
+		print("\nPatient is not in the system, adding him now...")
 		
-		name = raw_input("\nplease enter patients name: ")
+		print("What is the patient's health care no: ")
+		name = raw_input(">> ")
 		if(name == HOME):
 			return
 		
-		age_group = raw_input("\nplease enter patients age group: ")
+		print("Please enter the patient's age group: ")
+		age_group = raw_input(">> ")
 		if(name == HOME):
 			return
 		
-		address = raw_input("\nplease enter patient's address: ")
+		print("Please enter the patient's address")
+		address = raw_input(">> ")
 		if(name == HOME):
 			return
 		
-		phone_number = raw_input("\nplease enter patient's phone number(1112223333): ")
+		print("Please enter the patient's phone number (1112223333): ")
+		phone_number = raw_input(">> ")
 		while(len(phone_number) != 10 or not phone_number.isdigit()):
 			if(phone_number == HOME):
 				return
-			print("incorrect phone number format please re enter")
-			phone_number = raw_input("\nplease enter patient's phone number(1112223333): ")
+			print("Incorrect phone number format, please try again.")
+			print("Please enter the patient's phone number (1112223333):")
+			phone_number = raw_input(">> ")
 		
-		emg_number = raw_input("\nplease enter patient's  emergency phone number((1112223333): ")
+		print("Please enter the patient's emergency contact number (1112223333):")
+		emg_number = raw_input(">> ")
 		while(len(emg_number) != 10 or not emg_number.isdigit()):
 			if(emg_number == HOME):
 				return
-			print("incorrect phone number format please re enter")
-			emg_number = raw_input("\n please enter patient's phone number(1112223333): ")
+			print("Incorrect phone number format, please try again.\nPlease enter patient's phone number(1112223333): ")
+			emg_number = raw_input(">> ")
 		
 		params = (healthNo, name, age_group, address, phone_number, emg_number)
 		cursor.execute('INSERT into patients(hcno, name, age_group, address, phone, emg_phone) VALUES(?,?,?,?,?,?)', params)
@@ -386,7 +393,8 @@ def InsertChartTableIntoDB(params):
 
 #Ask the user a for a health care no. and then close any open table with that value
 def CloseChart():
-	health_care_no = raw_input("\nWhat is the patient health care no: ");
+	print("\nPlease enter the patient's health care number: ")
+	health_care_no = raw_input(">> ");
 	if(health_care_no == ".home"):
 		return
 
