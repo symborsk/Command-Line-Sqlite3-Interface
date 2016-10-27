@@ -178,7 +178,7 @@ def ListMeds():
 	diag = raw_input("Please enter diagnosis you wish to search: ").lower()
 	if diag == HOME: 
 		return 
-		
+
 	#run a query for each medication that counts and sorts times are prescribed
 	query = '''SELECT drug_name, COUNT(*) as med_count from medications, diagnoses where medications.chart_id = diagnoses.chart_id 
 																		           and diagnosis = ? 
@@ -223,7 +223,7 @@ def ListDiagnoses():
 
 	while True:
 		user = raw_input("Would you like to enter search another diagnosis(y/n)").lower();
-		if(user. == "y"):
+		if(user == "y"):
 			ListMeds()
 			return;
 		elif(user == "n"  or user == HOME):
