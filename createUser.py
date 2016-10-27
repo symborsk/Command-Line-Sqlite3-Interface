@@ -22,7 +22,7 @@ print("\nWelcome to the Hospital User Creation Service.")
 # Get user credentials
 name = str(raw_input("\nPlease enter your name: "))
 while waiting1:
-	role = str(raw_input("Please enter your role: "))
+	role = str(raw_input("Please enter your role\n(Doctor:D Nurse:N Administrator:A"))
 
 	# Check role value
 	if role.lower() == "d" or role.lower() == "n" or role.lower() == "a":

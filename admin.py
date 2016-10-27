@@ -42,10 +42,10 @@ def AdminMenu(name, s_id):
 def CreateReport():
 	
 	print("\nPlease enter the start date of your period in the format, DATE - format YYYY-MM-DD HH:MM:SS")
-	start = raw_input(">> ")
+	start = raw_input(">> ").lower()
 
 	if start == HOME: 
-		return -1, -1
+		return 
 	
 	if len(start) < 17:
 		print("\nwrong format - not long enough (YYYY-MM-DD HH:MM:SS)")
@@ -57,10 +57,10 @@ def CreateReport():
 		return
 	
 	print("\nPlease enter the end date of your period in the format, DATE - format YYYY-MM-DD HH:MM:SS")
-	end = raw_input(">> ")
+	end = raw_input(">> ").lower()
 	
 	if end==HOME: 
-		return -1, -1
+		return
 	
 	if len(end) < 17:
 		print("\nwrong format - not long enough (YYYY-MM-DD HH:MM:SS)")
@@ -105,33 +105,34 @@ The report should also contain a total for each category.
 def DrugStats():
 	print("\nDrug Stats")
 	print("\nPlease enter the start date of your period in the format, DATE - format YYYY-MM-DD HH:MM:SS")
-	start = raw_input(">> ")
+	start = raw_input(">> ").lower()
 	
 	if start == HOME: 
-		return -1, -1
+		return
 	
 	if len(start) < 17:
-		print("\nwrong format - not long enough (YYYY-MM-DD HH:MM:SS)")
+		print("\nWrong format - not long enough (YYYY-MM-DD HH:MM:SS)")
 		DrugStats()
 		return
 	if (start[4] != "-" or start[7] != "-" or start[13] != ":" or start[16] != ":"):
-		print("\nwrong format-not datetime format (YYYY-MM-DD HH:MM:SS)")
+		print("\nWrong format-not datetime format (YYYY-MM-DD HH:MM:SS)")
 		DrugStats()
 		return
 	
 	print("\nPlease enter the end date of your period in the format, DATE - format YYYY-MM-DD HH:MM:SS")
-	end = raw_input(">> ")
+	end = raw_input(">> ").lower()
 	
 	if end==HOME: 
-		return -1, -1
+		return
 	
 	if len(end) < 17:
-		print("\nwrong format - not long enough (YYYY-MM-DD HH:MM:SS)")
+		print("\nWrong format - not long enough (YYYY-MM-DD HH:MM:SS)")
 		DrugStats()
 		return
 	if (end[4] != "-" or end[7] != "-" or end[13] != ":" or end[16] != ":"):
-		print("\nwrong format-not datetime format (YYYY-MM-DD HH:MM:SS)")
+		print("\nWrong format-not datetime format (YYYY-MM-DD HH:MM:SS)")
 		DrugStats()
+		return
 	
 	if start >= end:
 		print("\nThe start date is greater than the end date, please re-enter")
@@ -174,10 +175,11 @@ def DrugStats():
 
 def ListMeds():
 
-	diag = raw_input("Please enter diagnosis you wish to search: ")
+	diag = raw_input("Please enter diagnosis you wish to search: ").lower()
 	if diag == HOME: 
 		return 
-	#run a query for each medication and add it with repeats
+		
+	#run a query for each medication that counts and sorts times are prescribed
 	query = '''SELECT drug_name, COUNT(*) as med_count from medications, diagnoses where medications.chart_id = diagnoses.chart_id 
 																		           and diagnosis = ? 
 																		           and diagnoses.ddate <= medications.mdate
@@ -188,6 +190,8 @@ def ListMeds():
 	print("Drugs that have been prescribed for diagnosis {} (ordered by most to least prescribed): ".format(diag))
 	for result in temp:
 		print(result[0])
+	if(len(temp) == 0):
+		print("No drugs prescribed for that diagnosis")
 
 	while True:
 		user = raw_input("Would you like to enter search another diagnosis(y/n)");
@@ -200,10 +204,12 @@ def ListMeds():
 			print("Invalid selection")
 
 def ListDiagnoses():
-	drug = raw_input("Please enter medication you wish to search: ")
+	drug = raw_input("Please enter medication you wish to search: ").lower()
 	if drug == HOME: 
 		return 
-	#run a query for each medication and add it with repeats
+
+
+	#run a query for each medication that calculates the average dose prescribed per diagnosis
 	query = '''SELECT diagnosis, AVG(medications.amount) as average from medications, diagnoses where medications.chart_id = diagnoses.chart_id 
 																		           and drug_name = ? 
 																		           and diagnoses.ddate <= medications.mdate
@@ -216,11 +222,11 @@ def ListDiagnoses():
 		print(result[0])
 
 	while True:
-		user = raw_input("Would you like to enter search another diagnosis(y/n)");
-		if(user.lower() == "y"):
+		user = raw_input("Would you like to enter search another diagnosis(y/n)").lower();
+		if(user. == "y"):
 			ListMeds()
 			return;
-		elif(user.lower() == "n"  or user.lower() == HOME):
+		elif(user == "n"  or user == HOME):
 			return
 		else:
 			print("Invalid selection")
