@@ -19,13 +19,11 @@ def AdminMenu(name, s_id):
 	staff_id = s_id
 	print("\nWelcome admin {} type .home at any point to return to this main screen".format(staff_name))
 	while True:
-		sel = raw_input("\nWhat would you like to do?\n1. Create Report\n2. Drug Category Stats\n3. List possible medications for some diagnosis\n4. List possible diagnosis for some drug\n5. Logout\n")
+		sel = raw_input("\nWhat would you like to do?\n1. Create Report for doctors and drugs prescribed\n2. Drug Category Stats\n3. List possible medications for some diagnosis\n4. List possible diagnosis for some drug\n5. Logout\n")
 		if sel == "1": 
 			CreateReport()
-			return
 		elif sel == "2":
 			DrugStats()
-			return
 		elif sel == "3":
 			ListMeds()
 		elif sel == "4":
@@ -41,7 +39,7 @@ def AdminMenu(name, s_id):
 """
 def CreateReport():
 	
-	print("\nPlease enter the start date of your period in the format, DATE - format YYYY-MM-DD HH:MM:SS")
+	print("\nPlease enter the start date of your period in the format YYYY-MM-DD HH:MM:SS")
 	start = raw_input(">> ").lower()
 
 	if start == HOME: 
@@ -56,7 +54,7 @@ def CreateReport():
 		CreateReport()
 		return
 	
-	print("\nPlease enter the end date of your period in the format, DATE - format YYYY-MM-DD HH:MM:SS")
+	print("\nPlease enter the end date of your period in the format YYYY-MM-DD HH:MM:SS")
 	end = raw_input(">> ").lower()
 	
 	if end==HOME: 
@@ -66,6 +64,7 @@ def CreateReport():
 		print("\nwrong format - not long enough (YYYY-MM-DD HH:MM:SS)")
 		CreateReport()
 		return
+	
 	if (end[4] != "-" or end[7] != "-" or end[13] != ":" or end[16] != ":"):
 		print("\nwrong format-not datetime format (YYYY-MM-DD HH:MM:SS)")
 		CreateReport()
@@ -77,6 +76,7 @@ def CreateReport():
 		return
 	
 	else:
+		print("Results: ")
 		sql = '''SELECT * FROM staff WHERE role == "D"'''
 		cursor.execute(sql)
 		docs = cursor.fetchall()
@@ -96,15 +96,23 @@ def CreateReport():
 				damt = row1[2]
 				if damt != 0:
 					print(str(drugname) + " : " + str(damt))
-		return
+
+		while True:
+			user = raw_input("Would you like generate another report?(y/n)").lower();
+			if(user == "y"):
+				CreateReport()
+				return
+			elif(user == "n"  or user == HOME):
+				return
+			else:
+				print("Invalid selection")
 
 """2. 
 For each category of drugs, list the total amount prescribed for each drug in that category in a specified period of time. 
 The report should also contain a total for each category.
 """
 def DrugStats():
-	print("\nDrug Stats")
-	print("\nPlease enter the start date of your period in the format, DATE - format YYYY-MM-DD HH:MM:SS")
+	print("\nPlease enter the start date of your period in the format YYYY-MM-DD HH:MM:SS")
 	start = raw_input(">> ").lower()
 	
 	if start == HOME: 
@@ -119,16 +127,17 @@ def DrugStats():
 		DrugStats()
 		return
 	
-	print("\nPlease enter the end date of your period in the format, DATE - format YYYY-MM-DD HH:MM:SS")
+	print("\nPlease enter the end date of your period in the format YYYY-MM-DD HH:MM:SS")
 	end = raw_input(">> ").lower()
 	
 	if end==HOME: 
 		return
 	
-	if len(end) < 17:
-		print("\nWrong format - not long enough (YYYY-MM-DD HH:MM:SS)")
+	if len(end) != 19:
+		print("\nWrong length (YYYY-MM-DD HH:MM:SS)")
 		DrugStats()
 		return
+	
 	if (end[4] != "-" or end[7] != "-" or end[13] != ":" or end[16] != ":"):
 		print("\nWrong format-not datetime format (YYYY-MM-DD HH:MM:SS)")
 		DrugStats()
@@ -138,8 +147,9 @@ def DrugStats():
 		print("\nThe start date is greater than the end date, please re-enter")
 		DrugStats()
 		return
-	
+
 	else:
+		print("Results: ")
 		sql = '''SELECT DISTINCT category FROM drugs'''
 		cursor.execute(sql)
 		categories = cursor.fetchall()
@@ -171,7 +181,16 @@ def DrugStats():
 						#print(str(namezz[0] + str(namezz[1]) + "going through?"))
 						
 				print(str(namez[0]) + " : " + str(indamt))
-		return
+		
+		while True:
+			user = raw_input("Would you like generate another report?(y/n)").lower();
+			if(user == "y"):
+				DrugStats()
+				return
+			elif(user == "n"  or user == HOME):
+				return
+			else:
+				print("Invalid selection")
 
 def ListMeds():
 
@@ -194,7 +213,7 @@ def ListMeds():
 		print("No drugs prescribed for that diagnosis")
 
 	while True:
-		user = raw_input("Would you like to enter search another diagnosis(y/n)");
+		user = raw_input("Would you like to enter search another diagnosis?(y/n)");
 		if(user.lower() == "y"):
 			ListMeds()
 			return;
@@ -222,10 +241,10 @@ def ListDiagnoses():
 		print(result[0])
 
 	while True:
-		user = raw_input("Would you like to enter search another diagnosis(y/n)").lower();
+		user = raw_input("Would you like to enter search another medication?(y/n)").lower();
 		if(user == "y"):
-			ListMeds()
-			return;
+			ListDiagnoses()
+			return
 		elif(user == "n"  or user == HOME):
 			return
 		else:
