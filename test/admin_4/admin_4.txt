@@ -1,0 +1,11 @@
+running admin 4:
+type in steroid :
+should get:
+ultra wimpy
+super wimpy 
+wimpy
+
+type in y
+type in marijuana 
+should get:
+headache 

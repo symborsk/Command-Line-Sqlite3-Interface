@@ -1,0 +1,7 @@
+Run task 3 on the admin menu
+Type in "dead" for the diagnoses
+Expected results:
+advil
+marijuana
+tylenol
+steroids
