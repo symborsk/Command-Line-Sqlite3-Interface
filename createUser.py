@@ -20,10 +20,11 @@ cursor = conn.cursor()
 
 print("\nWelcome to the Hospital User Creation Service.")
 # Get user credentials
-name = str(raw_input("\nPlease enter your name: "))
+print("Please enter your name")
+name = str(raw_input(">>"))
 while waiting1:
-	role = str(raw_input("Please enter your role\n(Doctor:D Nurse:N Administrator:A"))
-
+	print("Please enter your role (Doctor:D Nurse:N Administrator:A)")
+	role = str(raw_input(">>"))
 	# Check role value
 	if role.lower() == "d" or role.lower() == "n" or role.lower() == "a":
 		waiting1= False
@@ -31,9 +32,11 @@ while waiting1:
 		print("Please enter a proper role.")
 
 while waiting2: 
-	username = str(raw_input("Please enter a username: "))
-	password = str(getpass.getpass("Please enter a password: ")) 
-	
+	print("Please enter a username: ")
+	username = str(raw_input(">>"))
+	print("Please enter a password")
+	password = str(getpass.getpass(">>"))
+
 	params = (username, )
 	cursor.execute('SELECT * FROM staff WHERE login=?', params)
 
