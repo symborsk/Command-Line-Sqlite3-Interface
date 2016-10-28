@@ -6,6 +6,11 @@ from string import ascii_uppercase, digits, ascii_lowercase
 global HOME
 HOME = ".home"
 
+global conn
+global cursor
+conn = sqlite3.connect('hospital.db')
+cursor = conn.cursor()
+
 class Nurse:
 
 	def __init__(this, name, s_id):
@@ -13,12 +18,6 @@ class Nurse:
 		this.staff_id = s_id
 
 	def InitializeNurseMenu(this):
-		global conn
-		global cursor
-
-		conn = sqlite3.connect('hospital.db')
-		cursor = conn.cursor()
-
 		this.NurseMenu()
 
 	#main function call 
