@@ -4,19 +4,24 @@ import time
 global HOME
 HOME = ".home"
 
+
 global conn
 global cursor
 conn = sqlite3.connect('hospital.db')
 cursor = conn.cursor()
 
+
 class Doctor:
-	
+
 	def __init__(this, n, sid):
 		this.staff_id  = sid
 		this.staff_name = n
+		
 	
 	# Main doctor menu
 	def doctorMenu(this):
+		conn = sqlite3.connect('hospital.db')
+		cursor = conn.cursor()
 		print("\nWelcome Doctor %s to the doctor department. Please type .home at any point to return to this main screen." %(this.staff_name))
 
 		# Present doctor with their options
@@ -98,7 +103,7 @@ class Doctor:
 				else: print("No patient record found. Please try again.")
 
 	# For selecting a specific patient chart
-	def getChart( chartList):
+	def getChart(this, chartList):
 		# Get valid input
 		while True:
 			print("\nPlease enter a chart id:")
@@ -264,10 +269,10 @@ class Doctor:
 				print("Would you like to change the amount, continue or cancel?\n(Change = C, Continue = Y, Cancel = N)")
 				choice = raw_input(">> ").lower()
 				if choice==HOME:
-					return 0
+					return -1
 				elif choice=='c':
 					print("Please select the new amount: ")
-					return this.amountCheck(hcno, int(raw_input(">> "), drug_name))
+					return this.amountCheck(hcno, int(raw_input(">> ")), drug_name)
 				elif choice=='y':
 					return True
 				elif choice=='n':
@@ -275,7 +280,8 @@ class Doctor:
 				print("Please make a valid choice.")
 		return True
 
-	def allergyCheck( hcno, drug_name):
+	def allergyCheck(this, hcno, drug_name):
+		# Get all patients allergies
 		sql = '''SELECT drug_name FROM reportedallergies WHERE hcno=?'''
 		params = (hcno, )
 		allergicList = cursor.execute(sql, params).fetchall()
@@ -290,7 +296,7 @@ class Doctor:
 				print("Would you like to proceed? (Y/n)")
 				sel = raw_input(">> ").lower()
 				if sel==HOME:
-					return 0
+					return -1
 				elif sel=='y':
 					return True
 				elif sel=='n':
@@ -300,8 +306,8 @@ class Doctor:
 		else:
 			causedInferred = list()
 			for drug in drugList:
-				sql = '''SELECT * FROM inferredallergies WHERE alg=?'''
-				params = (drug, )
+				sql = '''SELECT * FROM inferredallergies WHERE alg=? and canbe_alg=?'''
+				params = (drug, drug_name)
 				if len(cursor.execute(sql, params).fetchall())>0:
 					causedInferred.append(drug)
 
@@ -317,7 +323,7 @@ class Doctor:
 					print("Would you like to proceed? (Y/n)")
 					sel = raw_input(">> ").lower()
 					if sel==HOME:
-						return 0
+						return -1
 					elif sel=='y':
 						return True
 					elif sel=='n':
@@ -357,7 +363,7 @@ class Doctor:
 		conn.commit()
 		return this.lineMenu(hcno, chart_id)
 
-	def addMedication ( hcno, chart_id):
+	def addMedication (this, hcno, chart_id):
 		# Get medication info
 		print("\nPlease enter the medication start date: ")
 		start = raw_input(">> ")
@@ -370,18 +376,24 @@ class Doctor:
 		
 		# If both tests pass we can add the medication
 		test1 = this.amountCheck(hcno, amount, drug_name)
-		test2 = this.allergyCheck(hcno, drug_name)
-		if  test1 and test2:
-			sql = '''INSERT INTO medications VALUES (?, ?, ?, ?, ?, ?, ?, ?)'''
-			params = (hcno, chart_id, this.staff_id, time.strftime("%Y-%m-%d %H:%M:%S"), start, end, amount, drug_name)
-			cursor.execute(sql, params)
-			conn.commit()
-		else: print("Line was not added.")
-
-		# Return to home
-		if test1==0 or test2 ==0:
+		if test1==-1:
+			print("Line was not added.")
 			return this.doctorMenu()
+		elif test1:
 
+			test2 = this.allergyCheck(hcno, drug_name)
+			if test2==-1:
+				print("Line was not added.")
+				return this.doctorMenu()
+
+			elif test2:
+				sql = '''INSERT INTO medications VALUES (?, ?, ?, ?, ?, ?, ?, ?)'''
+				params = (hcno, chart_id, this.staff_id, time.strftime("%Y-%m-%d %H:%M:%S"), start, end, amount, drug_name)
+				cursor.execute(sql, params)
+				conn.commit()
+
+		else:
+			print("Line was not added.")
 		return this.lineMenu(hcno, chart_id)
 
 	def addLine (this, hcno, chart_id):

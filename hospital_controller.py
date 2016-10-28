@@ -6,6 +6,8 @@ from doctor import Doctor
 from nurse import Nurse
 from admin import Admin
 from string import ascii_uppercase, digits, ascii_lowercase
+import os
+
 
 def Login():
 	global staff_role
@@ -15,6 +17,10 @@ def Login():
 	conn = sqlite3.connect('hospital.db')
 	cursor = conn.cursor()
 	
+	# Taken from http://stackoverflow.com/questions/2084508/clear-terminal-in-python
+	# On October 27, 2016 to clear the command line
+	os.system('cls' if os.name == 'nt' else 'clear')
+
 	waiting = True
 	while waiting:
 		# Get the user credentials
