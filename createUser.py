@@ -24,9 +24,9 @@ print("Please enter your name")
 name = str(raw_input(">>"))
 while waiting1:
 	print("Please enter your role (Doctor:D Nurse:N Administrator:A)")
-	role = str(raw_input(">>"))
+	role = str(raw_input(">>")).lower()
 	# Check role value
-	if role.lower() == "d" or role.lower() == "n" or role.lower() == "a":
+	if role  == "d" or role == "n" or role == "a":
 		waiting1= False
 	else:
 		print("Please enter a proper role.")

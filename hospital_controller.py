@@ -2,9 +2,9 @@ import sqlite3
 import hashlib
 import random
 import getpass
-from doctor import doctorMenu
-from nurse import InitializeNurseMenu
-from admin import AdminMenu
+from doctor import Doctor
+from nurse import Nurse
+from admin import Admin
 from string import ascii_uppercase, digits, ascii_lowercase
 
 def Login():
@@ -37,12 +37,12 @@ def Login():
 			user = results[0]
 			staff_id = user[0]
 			staff_name = user[1]
-			staff_role = user[2]
+			staff_role = user[2].lower()
 
 			#Set up our global staff information
 			waiting = False
 			conn.close()
-			ForwardMenu()
+			SwitchToRoleMenu()
 		else:
 			waiting1 = True
 			while waiting1:
@@ -56,14 +56,17 @@ def Login():
 				else:
 					("Please enter a valid input")
 
-def ForwardMenu():
+def SwitchToRoleMenu():
 
-	if( staff_role == "D"):
-		doctorMenu(staff_id, staff_name)
-	elif(staff_role =="N"):
-		InitializeNurseMenu(staff_name, staff_id)
-	elif(staff_role == "A"):
-		AdminMenu(staff_name, staff_id)
+	if( staff_role == "d"):
+		doctor = Doctor(staff_name, staff_id)
+		doctor.doctorMenu()
+	elif(staff_role =="n"):
+		nurse = Nurse(staff_name, staff_id)
+		nurse.InitializeNurseMenu()
+	elif(staff_role == "a"):
+		admin = Admin(staff_name, staff_id)
+		admin.AdminMenu()
 	else:
 		print("\nSomething went wrong please re-login")
 	Login()
